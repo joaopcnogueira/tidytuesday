@@ -1,20 +1,14 @@
----
-title: "National Park Visits"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-```{r, message=FALSE}
+# 01. LOADING LIBRARIES ----
 library(dplyr)
 library(ggplot2)
+library(plotly)
 
+
+# 02. LOADING DATA ----
 park_visits <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-09-17/national_parks.csv")
-```
 
-```{r}
+
+# 03. VISUALIZATION ----
 national_parks <- park_visits %>% 
     filter(unit_type == "National Park" & year != "Total") %>% 
     mutate(year = as.numeric(year)) %>% 
@@ -23,10 +17,8 @@ national_parks <- park_visits %>%
     mutate(total = sum(visitors)) %>% 
     select(-visitors) %>% 
     unique()
-```
 
-```{r}
-ggplot(national_parks, aes(x = year, y = total / 1000000)) +
+g1 <- ggplot(national_parks, aes(x = year, y = total / 1000000)) +
     geom_line(linetype = "dashed") +
     geom_area(fill = "Dark Green", alpha = 0.75) +
     labs(
@@ -46,9 +38,4 @@ ggplot(national_parks, aes(x = year, y = total / 1000000)) +
         breaks = c(0, 20, 40, 60, 80)
     )
 
-ggsave("../figs/national_parks.png")
-
-```
-
-
-
+ggplotly(g1)

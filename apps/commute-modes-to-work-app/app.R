@@ -52,7 +52,7 @@ server <- function(input, output) {
         # non-numeric variable needs to be passed as sym
         var <- sym(input$variable)
         
-        commuter_mode_by_state_region <- commute_mode %>% 
+        commuter_mode_by_input_variable <- commute_mode %>% 
             group_by(!!var, mode) %>% 
             summarize(total = sum(n)) %>% 
             ungroup() %>% 
@@ -62,7 +62,7 @@ server <- function(input, output) {
             ungroup() %>% 
             na.omit()
         
-        commuter_mode_by_state_region %>% 
+        commuter_mode_by_input_variable %>% 
             ggplot(aes(!!var, total, fill = mode)) +
             geom_col(position = "dodge") +
             geom_label(aes(label = prop_text), position = position_dodge(0.9)) +

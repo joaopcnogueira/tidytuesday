@@ -1,0 +1,200 @@
+---
+title: "New York City Squirrels"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars}
+library(tidyverse)
+
+nyc_squirrels <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-10-29/nyc_squirrels.csv") %>% 
+    mutate(date = lubridate::mdy(date))
+```
+
+
+# Squirrels seen's activities by main color?
+
+
+```{r}
+nyc_squirrels %>% 
+    
+    # Wrangling
+    group_by(primary_fur_color) %>% 
+    summarise_at(vars(running:foraging), sum) %>% 
+    ungroup() %>% 
+    filter(!is.na(primary_fur_color)) %>% 
+    pivot_longer(c(running:foraging), names_to = "activity") %>% 
+    mutate(activity = str_to_title(activity)) %>% 
+    mutate(activity = fct_reorder(activity, value)) %>% 
+    
+    # Visualization
+    ggplot(aes(activity, value, fill = primary_fur_color)) +
+    geom_col() +
+    coord_flip() +
+    labs(
+        subtitle = "Squirrels seen's activities by main color",
+        fill = "Main Color", 
+        x = "", 
+        y = "count"
+    ) +
+    scale_fill_manual(values = c("black", "#d2691e", "darkgray")) +
+    theme(
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.minor = element_blank(), 
+        panel.grid.major = element_blank()
+    )
+```
+
+
+# How is the distribution of squirrels throught the days of the week?
+
+
+```{r}
+nyc_squirrels %>% 
+    
+    # Wrangling
+    count(date) %>% 
+    mutate(weekday = lubridate::wday(date, label = TRUE, week_start=1)) %>% 
+    group_by(weekday) %>% 
+    summarise(n = sum(n)) %>% 
+    ungroup() %>% 
+    
+    # Visualization
+    ggplot(aes(weekday, n)) +
+    geom_col() +
+    geom_label(aes(label = n)) +
+    labs(
+        title = "Seen's squirrels by day of week",
+        subtitle = "Weekend rocks!",
+        y = "Number of squirrels",
+        x = ""
+    )
+```
+
+
+# Does squirrels with same predominant color stay together?
+
+
+```{r}
+nyc_squirrels %>% 
+    
+    # Wrangling
+    select(lon = long, lat, group = hectare, color = primary_fur_color) %>% 
+    
+    # Visualization
+    ggplot(aes(lon, lat, fill = color)) +
+    geom_polygon(aes(group = group)) +
+    coord_quickmap() +
+    scale_fill_manual(values = c("black", "#d2691e", "darkgray"))+
+    theme(
+        panel.background = element_rect(fill = "white"), 
+        panel.grid.minor = element_blank(), 
+        panel.grid.major = element_blank()
+    )
+```
+
+# From David Robinson Screencast
+
+```{r}
+library(tidyverse)
+
+nyc_squirrels <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-10-29/nyc_squirrels.csv")
+
+nyc_squirrels %>% 
+    count(zip_codes, sort = TRUE)
+```
+
+```{r}
+nyc_squirrels %>% 
+    ggplot(aes(long, lat)) +
+    geom_point()
+    
+by_hectare <- nyc_squirrels %>% 
+    group_by(hectare) %>% 
+    summarize(long = mean(long),
+              lat = mean(lat),
+              pct_gray = mean(primary_fur_color == "Gray", na.rm = TRUE),
+              n = n()) %>% 
+    ungroup()
+
+by_hectare %>% 
+    filter(n >= 10) %>% 
+    ggplot(aes(long, lat, size = n, color = pct_gray)) +
+    geom_point() +
+    theme_void()
+
+by_hectare %>% 
+    filter(n >= 10) %>% 
+    ggplot(aes(lat, pct_gray)) +
+    geom_point() +
+    geom_smooth()
+
+by_hectare %>% 
+    mutate(n_gray = round(pct_gray * n)) %>% 
+    glm(cbind(n_gray, n-n_gray) ~ lat, data = ., family = "binomial") %>% 
+    summary()
+
+```
+
+Squirrels may be more likely to be gray the higher the north in the park you go.
+
+```{r}
+nyc_squirrels %>% 
+    count(highlight_fur_color, sort = TRUE)
+```
+
+
+Does a squirrel run away?
+
+```{r}
+glm(runs_from ~ lat, data = nyc_squirrels, family = "binomial") %>% 
+    summary()
+```
+
+
+Plotting with Central Park Shapefile - base to creata the shiny visualization
+
+```{r}
+library(sf)
+
+central_park_sf <- read_sf("C:/Users/joaop/Documents/GitHub/tidytuesday/data_raw/central_park_shapefiles")
+
+ggplot(central_park_sf) +
+    geom_sf()
+
+central_park_sf %>% 
+    ggplot() +
+    geom_sf(aes(color = footway))
+
+
+by_hectare <- nyc_squirrels %>% 
+    add_count(hectare) %>% 
+    group_by(hectare, n) %>% 
+    summarize_at(vars(long, lat, runs_from, indifferent, ends_with("ing")), mean) %>% 
+    ungroup()
+
+
+by_hectare %>% 
+    filter(n >= 10) %>% 
+    ggplot() +
+    geom_sf(data = central_park_sf) +
+    geom_point(aes(long, lat, size = n, color = runs_from)) +
+    theme_void() +
+    scale_color_gradient2(low = "blue", high = "red", mid = "pink", 
+                          midpoint = .3, labels = scales::percent) +
+    labs(color = "% of squirrels run", 
+         size = "# of squirrels", 
+         title = "Squirrels in the northwest corner of Central Park are more likely to run away") +
+    coord_sf(datum = NA)
+```
+
+Now go to app.R in the nyc-squirrels-app folder
+
+
+
+
+

@@ -1,0 +1,117 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+commute_mode <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-11-05/commute.csv")
+
+```
+
+
+What is the most used mode to go to work across city sizes?
+
+```{r}
+commute_mode %>% glimpse()
+
+commute_mode %>% 
+    count(mode)
+
+
+commuter_mode_by_city_size <- commute_mode %>% 
+    group_by(city_size, mode) %>% 
+    summarize(total = sum(n)) %>% 
+    ungroup() %>% 
+    group_by(city_size) %>% 
+    mutate(prop = 100 * total / sum(total)) %>% 
+    mutate(prop_text = paste0(round(prop,1),"%")) %>% 
+    ungroup()
+    
+
+commuter_mode_by_city_size %>% 
+    ggplot(aes(city_size, total, fill = mode)) +
+    geom_col(position = "dodge") +
+    geom_label(aes(label = prop_text), position = position_dodge(0.9)) +
+    labs(title="Commute mode by city size",
+         x = "city size", 
+         y = "# commuters") +
+    scale_y_continuous(labels = scales::dollar_format(prefix = "")) +
+    theme_light()
+```
+
+
+What is the most used mode to go to work across state region?
+
+```{r}
+commute_mode %>% 
+    count(state_region)
+
+commuter_mode_by_state_region <- commute_mode %>% 
+    group_by(state_region, mode) %>% 
+    summarize(total = sum(n)) %>% 
+    ungroup() %>% 
+    group_by(state_region) %>% 
+    mutate(prop = 100 * total / sum(total)) %>% 
+    mutate(prop_text = paste0(round(prop,1),"%")) %>% 
+    ungroup() %>% 
+    na.omit()
+
+commuter_mode_by_state_region %>% 
+    ggplot(aes(state_region, total, fill = mode)) +
+    geom_col(position = "dodge") +
+    geom_label(aes(label = prop_text), position = position_dodge(0.9)) +
+    labs(title="Commute mode by state region",
+         x = "state region", 
+         y = "# commuters") +
+    scale_y_continuous(labels = scales::dollar_format(prefix = "")) +
+    theme_light()
+```
+
+
+
+```{r}
+commute_mode <- commute_mode %>% 
+    separate(city, into = c("first_name", "city_type"), sep = "\\s(?!.*\\s)", remove = FALSE) %>% 
+    select(-first_name) %>% 
+    mutate(city_type = str_to_title(city_type))
+
+commute_mode %>% 
+    count(city_type)
+
+commuter_mode_by_city_type <- commute_mode %>% 
+    group_by(city_type, mode) %>% 
+    summarize(total = sum(n)) %>% 
+    ungroup() %>% 
+    group_by(city_type) %>% 
+    mutate(prop = 100 * total / sum(total)) %>% 
+    mutate(prop_text = paste0(round(prop,1),"%")) %>% 
+    ungroup() %>% 
+    na.omit()
+
+commuter_mode_by_city_type %>% 
+    ggplot(aes(city_type, total, fill = mode)) +
+    geom_col(position = "dodge") +
+    geom_label(aes(label = prop_text), position = position_dodge(0.9)) +
+    labs(title="Commute mode by state region",
+         x = "state region", 
+         y = "# commuters") +
+    scale_y_continuous(labels = scales::dollar_format(prefix = "")) +
+    theme_light()
+
+
+```
+
+
+Go to the app!
+
+```{r}
+commute_mode %>% 
+    write_csv("apps/commute-modes-to-work-app/commute_mode.csv")
+```
+

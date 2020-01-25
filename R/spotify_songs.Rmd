@@ -34,3 +34,35 @@ spotify_songs %>%
 ```
 
 
+```{r}
+spotify_songs %>% 
+    count(track_artist, sort = TRUE) %>% 
+    slice(1:10) %>%
+    mutate(track_artist = fct_reorder(track_artist, n)) %>% 
+    
+    ggplot(aes(track_artist, n)) +
+    geom_col() +
+    coord_flip() +
+    geom_label(aes(label = n)) +
+    labs(x = "Artist", y = "Count") +
+    theme_light()
+```
+
+
+```{r}
+spotify_songs %>% 
+    # wrangling
+    count(playlist_genre, track_artist, sort = TRUE) %>% 
+    group_by(playlist_genre) %>% 
+    top_n(5) %>% 
+    ungroup() %>% 
+    mutate(track_artist = fct_reorder(track_artist, n)) %>% 
+    # visualization
+    ggplot(aes(track_artist, n, fill = playlist_genre))  +
+    geom_col() +
+    coord_flip() +
+    facet_wrap(~playlist_genre, scales = "free_y") +
+    labs(x = "", y = "", fill = "", 
+         title = "Top 5 Artist by Genre on Spotify")
+```
+

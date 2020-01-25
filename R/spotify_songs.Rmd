@@ -1,0 +1,36 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)
+
+spotify_songs <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv')
+```
+
+```{r}
+spotify_songs %>% 
+  # wrangling
+  count(playlist_genre) %>% 
+  mutate(playlist_genre = fct_reorder(playlist_genre, n)) %>% 
+  # visualization
+  ggplot(aes(playlist_genre, n)) +
+  geom_col() +
+  coord_flip() +
+  geom_label(aes(label = n)) +
+  theme_light() +
+  labs(
+    x = "Playlist Genre",
+    y = "Count"
+  )
+
+```
+
+

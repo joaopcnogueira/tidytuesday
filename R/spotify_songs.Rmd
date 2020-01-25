@@ -45,6 +45,7 @@ spotify_songs %>%
     coord_flip() +
     geom_label(aes(label = n)) +
     labs(x = "Artist", y = "Count") +
+
     theme_light()
 ```
 
